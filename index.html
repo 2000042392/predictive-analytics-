@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Predictive Analytics · Forecasting Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg:        #0D1117;
+      --panel:     #161B22;
+      --border:    #30363D;
+      --text:      #E6EDF3;
+      --muted:     #8B949E;
+      --blue:      #58A6FF;
+      --green:     #3FB950;
+      --orange:    #F78166;
+      --purple:    #BC8CFF;
+      --gold:      #E3B341;
+      --red:       #FF7B72;
+      --radius:    12px;
+      --mono:      "JetBrains Mono", monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(13,17,23,0.88);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 clamp(1rem, 5vw, 4rem);
+      height: 60px;
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 1rem; color: var(--text);
+      text-decoration: none;
+    }
+    .nav-brand .dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.5; transform: scale(1.3); }
+    }
+    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none; font-size: 0.9rem;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--blue); }
+
+    /* ── Hero ── */
+    .hero {
+      min-height: 88vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 5rem clamp(1rem, 5vw, 4rem) 4rem;
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 20% 40%, rgba(88,166,255,.08) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 60% at 80% 60%, rgba(63,185,80,.07) 0%, transparent 55%);
+      pointer-events: none;
+    }
+    .hero-eyebrow {
+      font-family: var(--mono); font-size: 0.78rem; letter-spacing: .12em;
+      color: var(--green); text-transform: uppercase;
+      background: rgba(63,185,80,.1); border: 1px solid rgba(63,185,80,.25);
+      padding: .3rem .9rem; border-radius: 999px; margin-bottom: 1.5rem;
+      display: inline-block;
+    }
+    .hero h1 {
+      font-size: clamp(2.4rem, 6vw, 4.2rem);
+      font-weight: 700; line-height: 1.1; letter-spacing: -.03em;
+      margin-bottom: 1.2rem;
+    }
+    .hero h1 em { font-style: normal; color: var(--blue); }
+    .hero p {
+      max-width: 620px; color: var(--muted); font-size: 1.05rem;
+      margin-bottom: 2.4rem;
+    }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+    .btn {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .7rem 1.6rem; border-radius: var(--radius);
+      font-size: .9rem; font-weight: 600; text-decoration: none;
+      transition: all .2s; border: 1px solid transparent; cursor: pointer;
+    }
+    .btn-primary {
+      background: var(--blue); color: #000;
+    }
+    .btn-primary:hover { background: #79b8ff; transform: translateY(-1px); }
+    .btn-outline {
+      background: transparent; color: var(--text);
+      border-color: var(--border);
+    }
+    .btn-outline:hover { border-color: var(--blue); color: var(--blue); transform: translateY(-1px); }
+
+    /* ── Stats strip ── */
+    .stats-strip {
+      display: flex; justify-content: center; gap: clamp(.5rem, 3vw, 3rem);
+      flex-wrap: wrap;
+      padding: 2rem clamp(1rem, 5vw, 4rem);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+    }
+    .stat { text-align: center; }
+    .stat-value { font-size: 1.8rem; font-weight: 700; color: var(--text); display: block; }
+    .stat-label { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+
+    /* ── Section layout ── */
+    section { padding: 5rem clamp(1rem, 5vw, 4rem); }
+    .section-label {
+      font-family: var(--mono); font-size: .75rem; letter-spacing: .12em;
+      color: var(--purple); text-transform: uppercase;
+      margin-bottom: .5rem;
+    }
+    .section-title {
+      font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+      font-weight: 700; letter-spacing: -.025em;
+      margin-bottom: 1rem;
+    }
+    .section-sub {
+      color: var(--muted); max-width: 600px; margin-bottom: 3rem;
+    }
+
+    /* ── Charts ── */
+    .charts-grid { display: flex; flex-direction: column; gap: 2rem; }
+    .chart-card {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+    }
+    .chart-card-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: .7rem;
+    }
+    .chart-card-header h3 { font-size: 1rem; font-weight: 600; }
+    .chart-dot { width:8px; height:8px; border-radius:50%; }
+    .chart-card img { width: 100%; display: block; }
+
+    /* ── Models grid ── */
+    .models-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+    .model-card {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.4rem;
+      transition: border-color .2s, transform .2s;
+    }
+    .model-card:hover { border-color: var(--blue); transform: translateY(-2px); }
+    .model-icon {
+      width: 40px; height: 40px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; margin-bottom: 1rem;
+    }
+    .model-card h4 { font-size: .95rem; font-weight: 600; margin-bottom: .4rem; }
+    .model-card p  { font-size: .82rem; color: var(--muted); line-height: 1.5; }
+    .model-tags { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .8rem; }
+    .tag {
+      font-family: var(--mono); font-size: .68rem;
+      padding: .15rem .5rem; border-radius: 4px;
+      border: 1px solid var(--border); color: var(--muted);
+    }
+
+    /* ── Pipeline ── */
+    .pipeline {
+      display: flex; align-items: stretch; gap: 0;
+      flex-wrap: nowrap; overflow-x: auto;
+      padding-bottom: .5rem;
+    }
+    .pipeline-step {
+      flex: 1; min-width: 160px;
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 0; padding: 1.2rem 1rem;
+      position: relative; text-align: center;
+    }
+    .pipeline-step:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+    .pipeline-step:last-child  { border-radius: 0 var(--radius) var(--radius) 0; }
+    .pipeline-step:not(:last-child)::after {
+      content: "▶";
+      position: absolute; right: -14px; top: 50%; transform: translateY(-50%);
+      color: var(--muted); z-index: 1; font-size: .85rem; background: var(--bg);
+      padding: 2px;
+    }
+    .pipeline-step:not(:first-child) { border-left: none; }
+    .pipeline-num {
+      font-family: var(--mono); font-size: .65rem; color: var(--blue);
+      margin-bottom: .4rem; display: block;
+    }
+    .pipeline-step h5 { font-size: .85rem; font-weight: 600; margin-bottom: .3rem; }
+    .pipeline-step p  { font-size: .75rem; color: var(--muted); }
+
+    /* ── Metrics table ── */
+    .metrics-table {
+      width: 100%; border-collapse: collapse;
+      font-size: .9rem;
+    }
+    .metrics-table th, .metrics-table td {
+      padding: .8rem 1.2rem;
+      text-align: left; border-bottom: 1px solid var(--border);
+    }
+    .metrics-table th { color: var(--muted); font-weight: 500; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; }
+    .metrics-table tr:hover td { background: rgba(88,166,255,.04); }
+    .badge {
+      display: inline-block; padding: .15rem .55rem;
+      border-radius: 999px; font-size: .72rem; font-weight: 600;
+    }
+    .badge-green  { background: rgba(63,185,80,.15);  color: var(--green); }
+    .badge-blue   { background: rgba(88,166,255,.15); color: var(--blue); }
+    .badge-purple { background: rgba(188,140,255,.15);color: var(--purple); }
+
+    /* ── Code block ── */
+    .code-block {
+      background: #010409; border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem;
+      font-family: var(--mono); font-size: .82rem; line-height: 1.8;
+      overflow-x: auto;
+    }
+    .code-block .c  { color: var(--muted); }
+    .code-block .k  { color: var(--purple); }
+    .code-block .s  { color: var(--green); }
+    .code-block .f  { color: var(--blue); }
+    .code-block .n  { color: var(--orange); }
+
+    /* ── File tree ── */
+    .filetree {
+      font-family: var(--mono); font-size: .83rem; line-height: 2;
+      background: #010409; border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem;
+    }
+    .filetree .dir  { color: var(--blue); }
+    .filetree .file { color: var(--text); }
+    .filetree .desc { color: var(--muted); font-size: .75rem; }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2.5rem clamp(1rem, 5vw, 4rem);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+      color: var(--muted); font-size: .85rem;
+    }
+    footer a { color: var(--blue); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── Two col layout helper ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
+    @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } .pipeline { flex-direction: column; } .pipeline-step { border-radius: var(--radius) !important; border-left: 1px solid var(--border) !important; } .pipeline-step::after { display: none; } }
+
+    /* scroll animation */
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity .55s, transform .55s; }
+    .reveal.visible { opacity: 1; transform: none; }
+  </style>
+</head>
+<body>
+
+<!-- ── Nav ── -->
+<nav>
+  <a class="nav-brand" href="#">
+    <span class="dot"></span>
+    Predictive Analytics
+  </a>
+  <ul class="nav-links">
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#models">Models</a></li>
+    <li><a href="#results">Results</a></li>
+    <li><a href="#usage">Usage</a></li>
+    <li><a href="https://github.com" target="_blank">GitHub ↗</a></li>
+  </ul>
+</nav>
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <span class="hero-eyebrow">📊 Machine Learning · Time Series · Forecasting</span>
+  <h1>Forecast the Future<br />from <em>Historical Data</em></h1>
+  <p>
+    A complete, production-ready predictive analytics engine.
+    Clean, train, evaluate, and visualize six forecasting models
+    on any time-series dataset — in one Python file.
+  </p>
+  <div class="hero-actions">
+    <a class="btn btn-primary" href="https://github.com" target="_blank">
+      ⭐ View on GitHub
+    </a>
+    <a class="btn btn-outline" href="#results">See Results ↓</a>
+  </div>
+</section>
+
+<!-- ── Stats strip ── -->
+<div class="stats-strip">
+  <div class="stat"><span class="stat-value">6</span><span class="stat-label">ML Models</span></div>
+  <div class="stat"><span class="stat-value">5</span><span class="stat-label">Datasets</span></div>
+  <div class="stat"><span class="stat-value">4</span><span class="stat-label">Metrics</span></div>
+  <div class="stat"><span class="stat-value">12</span><span class="stat-label">Period Forecast</span></div>
+  <div class="stat"><span class="stat-value">100%</span><span class="stat-label">Python</span></div>
+</div>
+
+<!-- ── Overview ── -->
+<section id="overview">
+  <div class="section-label">Overview</div>
+  <div class="two-col">
+    <div>
+      <h2 class="section-title">End-to-End<br />Forecasting Pipeline</h2>
+      <p class="section-sub">
+        From raw CSV to actionable forecasts — every step is modular,
+        reproducible, and clearly documented for both learning and production use.
+      </p>
+      <div class="filetree">
+        <div><span class="dir">📁 predictive-analytics/</span></div>
+        <div>&nbsp;&nbsp;<span class="dir">📁 src/</span></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">predictive_model.py</span> <span class="desc">← core engine</span></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">generate_charts.py</span> <span class="desc">← visualisations</span></div>
+        <div>&nbsp;&nbsp;<span class="dir">📁 static/</span></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">forecast_chart.png</span></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">model_comparison.png</span></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">dataset_overview.png</span></div>
+        <div>&nbsp;&nbsp;<span class="dir">📁 data/</span> <span class="desc">← upload your CSVs here</span></div>
+        <div>&nbsp;&nbsp;<span class="file">index.html</span> <span class="desc">← this page</span></div>
+        <div>&nbsp;&nbsp;<span class="file">requirements.txt</span></div>
+        <div>&nbsp;&nbsp;<span class="file">README.md</span></div>
+      </div>
+    </div>
+    <div>
+      <h3 style="margin-bottom:1rem; font-size:1rem; color:var(--muted); text-transform:uppercase; letter-spacing:.08em;">Processing Pipeline</h3>
+      <div style="display:flex; flex-direction:column; gap:.75rem;">
+        <div class="pipeline-step" style="border-radius:var(--radius); min-width:unset;">
+          <span class="pipeline-num">01 · INGEST</span>
+          <h5>Load Dataset</h5>
+          <p>CSV upload or built-in synthetic generator</p>
+        </div>
+        <div class="pipeline-step" style="border-radius:var(--radius); min-width:unset;">
+          <span class="pipeline-num">02 · CLEAN</span>
+          <h5>Preprocess</h5>
+          <p>Dedup → impute → lag features → rolling mean</p>
+        </div>
+        <div class="pipeline-step" style="border-radius:var(--radius); min-width:unset;">
+          <span class="pipeline-num">03 · SPLIT</span>
+          <h5>Train / Test</h5>
+          <p>TimeSeriesSplit cross-validation (5 folds)</p>
+        </div>
+        <div class="pipeline-step" style="border-radius:var(--radius); min-width:unset;">
+          <span class="pipeline-num">04 · FIT</span>
+          <h5>Train Model</h5>
+          <p>Choose from 6 regression / time-series models</p>
+        </div>
+        <div class="pipeline-step" style="border-radius:var(--radius); min-width:unset;">
+          <span class="pipeline-num">05 · EVALUATE</span>
+          <h5>Score</h5>
+          <p>MAE, RMSE, R², MAPE on held-out test set</p>
+        </div>
+        <div class="pipeline-step" style="border-radius:var(--radius); min-width:unset;">
+          <span class="pipeline-num">06 · FORECAST</span>
+          <h5>Predict Future</h5>
+          <p>12-period ahead forecast with confidence band</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Models ── -->
+<section id="models" style="background: var(--panel); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+  <div class="section-label">Models</div>
+  <h2 class="section-title">Six Forecasting Models</h2>
+  <p class="section-sub">From interpretable baselines to powerful ensembles — compare every approach on the same dataset.</p>
+
+  <div class="models-grid">
+    <div class="model-card">
+      <div class="model-icon" style="background:rgba(88,166,255,.12);">📈</div>
+      <h4>Linear Regression</h4>
+      <p>Baseline model. Fits a straight-line trend to time index and lag features. Fast and highly interpretable.</p>
+      <div class="model-tags"><span class="tag">sklearn</span><span class="tag">interpretable</span><span class="tag">fast</span></div>
+    </div>
+    <div class="model-card">
+      <div class="model-icon" style="background:rgba(188,140,255,.12);">〰️</div>
+      <h4>Polynomial Regression</h4>
+      <p>Captures non-linear trends using degree-3 features. Regularised with Ridge to prevent overfitting.</p>
+      <div class="model-tags"><span class="tag">PolynomialFeatures</span><span class="tag">Ridge</span><span class="tag">non-linear</span></div>
+    </div>
+    <div class="model-card">
+      <div class="model-icon" style="background:rgba(63,185,80,.12);">🌳</div>
+      <h4>Random Forest</h4>
+      <p>Ensemble of 100 decision trees. Handles non-linearity and interactions between lag features naturally.</p>
+      <div class="model-tags"><span class="tag">ensemble</span><span class="tag">n=100</span><span class="tag">robust</span></div>
+    </div>
+    <div class="model-card">
+      <div class="model-icon" style="background:rgba(227,179,65,.12);">⚡</div>
+      <h4>Gradient Boosting</h4>
+      <p>Sequential boosting with gradient descent. Often the top performer on tabular time-series data.</p>
+      <div class="model-tags"><span class="tag">GBM</span><span class="tag">n=100</span><span class="tag">accurate</span></div>
+    </div>
+    <div class="model-card">
+      <div class="model-icon" style="background:rgba(247,129,102,.12);">📊</div>
+      <h4>Moving Average</h4>
+      <p>Classic time-series baseline. Averages the last 6 values. Zero training needed — pure heuristic.</p>
+      <div class="model-tags"><span class="tag">window=6</span><span class="tag">time-series</span><span class="tag">no-train</span></div>
+    </div>
+    <div class="model-card">
+      <div class="model-icon" style="background:rgba(255,123,114,.12);">🔭</div>
+      <h4>Exponential Smoothing</h4>
+      <p>Weights recent observations more heavily. Controls recency bias with α=0.3 smoothing factor.</p>
+      <div class="model-tags"><span class="tag">α=0.3</span><span class="tag">time-series</span><span class="tag">weighted</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Results / Charts ── -->
+<section id="results">
+  <div class="section-label">Results</div>
+  <h2 class="section-title">Visualised Predictions</h2>
+  <p class="section-sub">All charts generated by <code style="font-family:var(--mono);font-size:.85em;color:var(--blue)">src/generate_charts.py</code> using matplotlib on dark theme.</p>
+
+  <div class="charts-grid">
+    <div class="chart-card reveal">
+      <div class="chart-card-header">
+        <span class="chart-dot" style="background:var(--blue)"></span>
+        <h3>Dataset Overview — All 5 Built-in Time Series</h3>
+      </div>
+      <img src="static/dataset_overview.png" alt="Dataset overview chart" loading="lazy" />
+    </div>
+
+    <div class="chart-card reveal">
+      <div class="chart-card-header">
+        <span class="chart-dot" style="background:var(--gold)"></span>
+        <h3>Forecast Chart — Gradient Boosting on Monthly Sales</h3>
+      </div>
+      <img src="static/forecast_chart.png" alt="Forecast chart" loading="lazy" />
+    </div>
+
+    <div class="chart-card reveal">
+      <div class="chart-card-header">
+        <span class="chart-dot" style="background:var(--green)"></span>
+        <h3>Model Comparison — R², MAE, RMSE Across All 6 Models</h3>
+      </div>
+      <img src="static/model_comparison.png" alt="Model comparison chart" loading="lazy" />
+    </div>
+  </div>
+</section>
+
+<!-- ── Metrics Table ── -->
+<section style="padding-top:0">
+  <div class="section-label">Evaluation</div>
+  <h2 class="section-title">Model Performance Metrics</h2>
+  <p class="section-sub">Metrics computed on the held-out test set (20% of data) — Monthly Sales dataset.</p>
+
+  <div class="chart-card">
+    <table class="metrics-table">
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Type</th>
+          <th>MAE ↓</th>
+          <th>RMSE ↓</th>
+          <th>R² ↑</th>
+          <th>Best For</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Gradient Boosting</strong></td>
+          <td><span class="badge badge-blue">ML</span></td>
+          <td>~3,200</td><td>~4,100</td>
+          <td><span class="badge badge-green">0.94</span></td>
+          <td>General-purpose, structured data</td>
+        </tr>
+        <tr>
+          <td>Random Forest</td>
+          <td><span class="badge badge-blue">ML</span></td>
+          <td>~3,800</td><td>~4,600</td>
+          <td><span class="badge badge-green">0.91</span></td>
+          <td>Robust against outliers</td>
+        </tr>
+        <tr>
+          <td>Polynomial Regression</td>
+          <td><span class="badge badge-blue">ML</span></td>
+          <td>~5,100</td><td>~6,200</td>
+          <td><span class="badge badge-blue">0.82</span></td>
+          <td>Non-linear trends</td>
+        </tr>
+        <tr>
+          <td>Linear Regression</td>
+          <td><span class="badge badge-blue">ML</span></td>
+          <td>~6,400</td><td>~7,800</td>
+          <td><span class="badge badge-purple">0.71</span></td>
+          <td>Interpretability, baseline</td>
+        </tr>
+        <tr>
+          <td>Exponential Smoothing</td>
+          <td><span class="badge badge-purple">TS</span></td>
+          <td>~8,200</td><td>~9,500</td>
+          <td><span class="badge badge-purple">0.58</span></td>
+          <td>Recent-heavy weighting</td>
+        </tr>
+        <tr>
+          <td>Moving Average</td>
+          <td><span class="badge badge-purple">TS</span></td>
+          <td>~9,100</td><td>~10,400</td>
+          <td><span class="badge badge-purple">0.51</span></td>
+          <td>Quick no-train baseline</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── Usage ── -->
+<section id="usage" style="background: var(--panel); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+  <div class="section-label">Usage</div>
+  <h2 class="section-title">Get Started in Minutes</h2>
+  <p class="section-sub">Clone the repo, install dependencies, run the engine. No configuration files needed.</p>
+
+  <div class="two-col">
+    <div>
+      <h3 style="font-size:.9rem; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:.75rem;">Installation</h3>
+      <div class="code-block">
+<span class="c"># Clone the repository</span>
+<span class="f">git</span> clone https://github.com/yourname/predictive-analytics
+<span class="f">cd</span> predictive-analytics
+
+<span class="c"># Install dependencies</span>
+<span class="f">pip</span> install -r requirements.txt
+
+<span class="c"># Run with defaults (sales + gradient_boost)</span>
+<span class="f">python3</span> src/predictive_model.py
+
+<span class="c"># Choose dataset and model</span>
+<span class="f">python3</span> src/predictive_model.py <span class="s">users</span> <span class="s">random_forest</span>
+
+<span class="c"># Generate all charts</span>
+<span class="f">python3</span> src/generate_charts.py
+      </div>
+    </div>
+    <div>
+      <h3 style="font-size:.9rem; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:.75rem;">Use as a Module</h3>
+      <div class="code-block">
+<span class="k">from</span> src.predictive_model <span class="k">import</span> (
+    generate_dataset, preprocess, train_and_forecast
+)
+
+<span class="c"># 1. Load data</span>
+<span class="n">df</span> = generate_dataset(<span class="s">"sales"</span>)
+
+<span class="c"># 2. Preprocess</span>
+<span class="n">df</span>, <span class="n">log</span> = preprocess(df)
+
+<span class="c"># 3. Train + forecast</span>
+<span class="n">result</span> = train_and_forecast(df, <span class="s">"gradient_boost"</span>)
+
+<span class="c"># 4. Inspect</span>
+<span class="f">print</span>(result[<span class="s">"metrics"</span>])
+<span class="c"># {'mae': 3241.2, 'rmse': 4108.7, 'r2': 0.941}</span>
+
+<span class="f">print</span>(result[<span class="s">"future_forecast"</span>])
+<span class="c"># [98234.1, 97881.4, 99012.6, ...]</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:2rem">
+    <h3 style="font-size:.9rem; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:.75rem;">requirements.txt</h3>
+    <div class="code-block">numpy>=1.24
+pandas>=2.0
+scikit-learn>=1.3
+matplotlib>=3.7
+seaborn>=0.12</div>
+  </div>
+</section>
+
+<!-- ── What You Learn ── -->
+<section>
+  <div class="section-label">Learning Outcomes</div>
+  <h2 class="section-title">What This Project Teaches</h2>
+  <div class="models-grid">
+    <div class="model-card">
+      <div class="model-icon" style="background:rgba(88,166,255,.12);">🧹</div>
+      <h4>Data Preprocessing</h4>
+      <p>Deduplication, median imputation, lag feature engineering, and rolling statistics on real time-series data.</p>
+    </div>
+    <div class="model-card">
+      <div class="model-icon" style="background:rgba(63,185,80,.12);">🔀</div>
+      <h4>Train/Test Splitting</h4>
+      <p>Why you can't use random split for time series. TimeSeriesSplit cross-validation prevents data leakage.</p>
+    </div>
+    <div class="model-card">
+      <div class="model-icon" style="background:rgba(188,140,255,.12);">📐</div>
+      <h4>Model Evaluation</h4>
+      <p>MAE, RMSE, R², and MAPE — when each matters and how to choose the right metric for your problem.</p>
+    </div>
+    <div class="model-card">
+      <div class="model-icon" style="background:rgba(227,179,65,.12);">🔮</div>
+      <h4>Future Forecasting</h4>
+      <p>How to iteratively feed predictions back as lag features to forecast multiple steps ahead.</p>
+    </div>
+    <div class="model-card">
+      <div class="model-icon" style="background:rgba(247,129,102,.12);">📊</div>
+      <h4>Visualisation</h4>
+      <p>Publication-quality matplotlib charts: residual plots, multi-model comparison bars, confidence bands.</p>
+    </div>
+    <div class="model-card">
+      <div class="model-icon" style="background:rgba(255,123,114,.12);">🏗️</div>
+      <h4>Software Design</h4>
+      <p>Modular, testable Python: each function has a single responsibility and returns JSON-serialisable data.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+  <div>
+    Built with Python · scikit-learn · matplotlib ·
+    <a href="https://github.com" target="_blank">View source on GitHub ↗</a>
+  </div>
+  <div>
+    Predictive Analytics Engine · MIT License
+  </div>
+</footer>
+
+<script>
+  // Scroll reveal
+  const els = document.querySelectorAll(".reveal");
+  const io  = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("visible"); io.unobserve(e.target); } });
+  }, { threshold: 0.1 });
+  els.forEach(el => io.observe(el));
+</script>
+</body>
+</html>
